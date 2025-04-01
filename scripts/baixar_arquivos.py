@@ -37,7 +37,8 @@ def descompactar_arquivo_zip(caminho_zip, caminho_destino):
     with zipfile.ZipFile(caminho_zip, 'r') as zip_ref:
         zip_ref.extractall(caminho_destino)
     print(f'Arquivo descompactado: {caminho_zip} para {caminho_destino}')
-    
+    os.remove(caminho_zip)
+    print(f'Arquivo ZIP removido: {caminho_zip}')
 
 # Baixar arquivos dos últimos 2 anos
 ano_atual = datetime.now().year
