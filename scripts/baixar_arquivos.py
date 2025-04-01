@@ -46,5 +46,3 @@ for ano in anos_para_baixar:
 url_operadoras = 'https://dadosabertos.ans.gov.br/FTP/PDA/operadoras_de_plano_de_saude_ativas/operadoras_ativas.zip'
 destino_operadoras = os.path.join(diretorio_downloads, 'operadoras_ativas.zip')
 baixar_arquivo(url_operadoras, destino_operadoras)
-
-# testeeee
