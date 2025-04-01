@@ -23,11 +23,11 @@ def baixar_arquivo(url, destino):
         print(f'Erro ao baixar {url}: {resposta.status_code}')
 
 # Função para obter a lista de arquivos em um diretório
-def obter_lista_arquivos(url):
+def obter_lista_arquivos(url, extensao='.zip'):
     resposta = requests.get(url)
     if resposta.status_code == 200:
         soup = BeautifulSoup(resposta.text, 'html.parser')
-        return [url + node.get('href') for node in soup.find_all('a') if node.get('href').endswith('.zip')]
+        return [url + node.get('href') for node in soup.find_all('a') if node.get('href').endswith(extensao)]
     else:
         print(f'Erro ao acessar {url}: {resposta.status_code}')
         return []
@@ -37,6 +37,7 @@ def descompactar_arquivo_zip(caminho_zip, caminho_destino):
     with zipfile.ZipFile(caminho_zip, 'r') as zip_ref:
         zip_ref.extractall(caminho_destino)
     print(f'Arquivo descompactado: {caminho_zip} para {caminho_destino}')
+    
 
 # Baixar arquivos dos últimos 2 anos
 ano_atual = datetime.now().year
@@ -55,11 +56,11 @@ for ano in anos_para_baixar:
         descompactar_arquivo_zip(caminho_destino, caminho_pasta_ano)
 
 # Baixar dados cadastrais das operadoras ativas
-url_operadoras = 'https://dadosabertos.ans.gov.br/FTP/PDA/operadoras_de_plano_de_saude_ativas/operadoras_ativas.zip'
-destino_operadoras = os.path.join(diretorio_downloads, 'operadoras_ativas.zip')
-baixar_arquivo(url_operadoras, destino_operadoras)
-
-# Criar pasta para operadoras ativas e descompactar o arquivo
-caminho_pasta_operadoras = os.path.join(diretorio_downloads, 'operadoras_ativas')
-os.makedirs(caminho_pasta_operadoras, exist_ok=True)
-descompactar_arquivo_zip(destino_operadoras, caminho_pasta_operadoras)
+url_operadoras_base = 'https://dadosabertos.ans.gov.br/FTP/PDA/operadoras_de_plano_de_saude_ativas/'
+arquivos_operadoras = obter_lista_arquivos(url_operadoras_base, extensao='.csv')
+for arquivo in arquivos_operadoras:
+    nome_arquivo = os.path.basename(arquivo)
+    caminho_pasta_operadoras = os.path.join(diretorio_downloads, 'operadoras_ativas')
+    os.makedirs(caminho_pasta_operadoras, exist_ok=True)
+    destino_operadoras = os.path.join(caminho_pasta_operadoras, nome_arquivo)
+    baixar_arquivo(arquivo, destino_operadoras)
