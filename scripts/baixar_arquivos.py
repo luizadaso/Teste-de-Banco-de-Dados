@@ -60,8 +60,10 @@ for ano in anos_para_baixar:
 url_operadoras_base = 'https://dadosabertos.ans.gov.br/FTP/PDA/operadoras_de_plano_de_saude_ativas/'
 arquivos_operadoras = obter_lista_arquivos(url_operadoras_base, extensao='.csv')
 for arquivo in arquivos_operadoras:
-    nome_arquivo = os.path.basename(arquivo)
     caminho_pasta_operadoras = os.path.join(diretorio_downloads, 'operadoras_ativas')
     os.makedirs(caminho_pasta_operadoras, exist_ok=True)
-    destino_operadoras = os.path.join(caminho_pasta_operadoras, nome_arquivo)
-    baixar_arquivo(arquivo, destino_operadoras)
+    destino_operadoras_temp = os.path.join(caminho_pasta_operadoras, os.path.basename(arquivo))
+    destino_operadoras_final = os.path.join(caminho_pasta_operadoras, 'Relatorio_Operadoras_Ativas.csv')
+    baixar_arquivo(arquivo, destino_operadoras_temp)
+    os.rename(destino_operadoras_temp, destino_operadoras_final)
+    print(f'Arquivo renomeado para: {destino_operadoras_final}')
