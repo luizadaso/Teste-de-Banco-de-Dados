@@ -14,6 +14,13 @@ def remover_caracteres_especiais(df):
         df["DESCRICAO"] = df["DESCRICAO"].astype(str).apply(lambda x: re.sub(r"[^a-zA-Z0-9\s]", "", x))
     return df
 
+# Função para converter valores decimais
+def converter_valores_decimais(df, colunas):
+    for coluna in colunas:
+        if coluna in df.columns:
+            df[coluna] = df[coluna].str.replace(',', '.').astype(float)
+    return df
+
 # Função para importar dados do CSV para o MySQL
 def importar_csv_para_mysql(caminho_csv, tabela, colunas, db_config):
     # Ler o arquivo CSV usando pandas
@@ -25,6 +32,9 @@ def importar_csv_para_mysql(caminho_csv, tabela, colunas, db_config):
 
     # Remover caracteres especiais da coluna DESCRICAO
     df = remover_caracteres_especiais(df)
+
+    # Converter valores decimais
+    df = converter_valores_decimais(df, ['VL_SALDO_FINAL', 'VL_SALDO_INICIAL'])
 
     # Conectar ao banco de dados MySQL
     try:
@@ -68,7 +78,7 @@ arquivos_trimestres = [
 ]
 
 for arquivo in arquivos_trimestres:
-    importar_csv_para_mysql(arquivo, 'dadosimportados', ['REG_ANS', 'DESCRICAO', 'VL_SALDO_FINAL', 'VL_SALDO_INICIAL'], db_config)
+    importar_csv_para_mysql(arquivo, 'dadosimportados', ['REG_ANS', 'DESCRICAO', 'VL_SALDO_FINAL', 'VL_SALDO_INICIAL', 'DATA'], db_config)
 
 # Importar dados do CSV para o MySQL
 destino_operadoras_final = os.path.join(diretorio_uploads, 'Relatorio_Operadoras_Ativas.csv')
