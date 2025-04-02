@@ -40,30 +40,20 @@ def obter_lista_arquivos(url, extensao='.zip'):
 
 # Função para descompactar arquivos ZIP
 def descompactar_arquivo_zip(caminho_zip, caminho_destino):
-    try:
-        with zipfile.ZipFile(caminho_zip, 'r') as zip_ref:
-            for member in zip_ref.namelist():
-                filename = os.path.basename(member)
-                if not filename:
-                    continue
-                source = zip_ref.open(member)
-                target_path = os.path.join(caminho_destino, filename)
-                # Verificar se o comprimento do caminho é válido
-                if len(target_path) > 260:
-                    print(f"Erro: O caminho do arquivo é muito longo: {target_path}")
-                    continue
-                with open(target_path, "wb") as target:
-                    shutil.copyfileobj(source, target)
-        print(f'Arquivo descompactado: {caminho_zip} para {caminho_destino}')
-    finally:
-        # Verificar se o arquivo ainda está sendo usado por outro processo
-        for _ in range(10):  # Tentar 10 vezes
-            try:
-                os.remove(caminho_zip)
-                print(f'Arquivo ZIP removido: {caminho_zip}')
-                break
-            except PermissionError:
-                time.sleep(1)  # Esperar 1 segundo antes de tentar novamente
+    with zipfile.ZipFile(caminho_zip, 'r') as zip_ref:
+        for member in zip_ref.namelist():
+            filename = os.path.basename(member)
+            if not filename:
+                continue
+            source = zip_ref.open(member)
+            target_path = os.path.join(caminho_destino, filename)
+            # Verificar se o comprimento do caminho é válido
+            if len(target_path) > 260:
+                print(f"Erro: O caminho do arquivo é muito longo: {target_path}")
+                continue
+            with open(target_path, "wb") as target:
+                shutil.copyfileobj(source, target)
+    print(f'Arquivo descompactado: {caminho_zip} para {caminho_destino}')
 
 # Função para copiar arquivos para o diretório de uploads
 def copiar_arquivos(origem, destino):
@@ -73,6 +63,14 @@ def copiar_arquivos(origem, destino):
             caminho_destino = os.path.join(destino, file)
             shutil.copy2(caminho_origem, caminho_destino)
             print(f'Arquivo copiado para: {caminho_destino}')
+
+# Função para excluir arquivos ZIP
+def excluir_arquivos_zip(diretorio):
+    for root, dirs, files in os.walk(diretorio):
+        for file in files:
+            if file.endswith('.zip'):
+                os.remove(os.path.join(root, file))
+                print(f'Arquivo ZIP removido: {os.path.join(root, file)}')
 
 # Baixar arquivos dos últimos 2 anos
 ano_atual = datetime.now().year
@@ -124,3 +122,6 @@ for arquivo in arquivos_operadoras:
     # Copiar o arquivo CSV para o diretório de uploads
     shutil.copy2(destino_operadoras_final, diretorio_uploads)
     print(f'Arquivo copiado para: {os.path.join(diretorio_uploads, "Relatorio_Operadoras_Ativas.csv")}')
+
+# Excluir todos os arquivos ZIP após o processo
+excluir_arquivos_zip(diretorio_downloads)
