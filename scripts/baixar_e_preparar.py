@@ -4,6 +4,8 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import zipfile
 import shutil
+import pandas as pd
+import re
 import time
 
 # Diretório onde os arquivos serão salvos
@@ -72,6 +74,60 @@ def excluir_arquivos_zip(diretorio):
                 os.remove(os.path.join(root, file))
                 print(f'Arquivo ZIP removido: {os.path.join(root, file)}')
 
+# Função para remover caracteres especiais da coluna DESCRICAO
+def remover_caracteres_especiais(df):
+    if "DESCRICAO" in df.columns:
+        df["DESCRICAO"] = df["DESCRICAO"].astype(str).apply(lambda x: re.sub(r"[^a-zA-Z0-9\s]", "", x))
+    return df
+
+# Função para converter colunas de saldo para float
+def converter_saldos_para_decimal(df):
+    for coluna in ["VL_SALDO_INICIAL", "VL_SALDO_FINAL"]:
+        if coluna in df.columns:
+            df[coluna] = df[coluna].replace({',': '.'}, regex=True)  # Troca vírgula por ponto
+            df[coluna] = pd.to_numeric(df[coluna], errors='coerce')  # Converte para float
+            df[coluna] = df[coluna].apply(lambda x: round(x, 2) if pd.notnull(x) else x)  # Arredonda para 2 casas
+    return df
+
+# Função para pré-processar arquivos CSV
+def preprocessar_arquivos_csv(diretorio):
+    arquivos = [f for f in os.listdir(diretorio) if f.endswith('.csv')]
+    lista_dfs = []
+
+    for arquivo in arquivos:
+        caminho_entrada = os.path.join(diretorio, arquivo)
+
+        try:
+            # Detecta o delimitador automaticamente
+            with open(caminho_entrada, "r", encoding="latin1") as f:
+                primeira_linha = f.readline()
+                delimitador = ";" if ";" in primeira_linha else ","
+
+            # Ler o CSV com delimitador correto
+            df = pd.read_csv(caminho_entrada, encoding="latin1", delimiter=delimitador, on_bad_lines="skip")
+
+            # Remover caracteres especiais da coluna DESCRICAO
+            df = remover_caracteres_especiais(df)
+
+            # Converter as colunas de saldo para float
+            df = converter_saldos_para_decimal(df)
+
+            # Adicionar o DataFrame à lista
+            lista_dfs.append(df)
+            print(f"Arquivo processado: {arquivo}")
+        except Exception as e:
+            print(f"Erro ao processar {arquivo}: {e}")
+
+    # Concatenar todos os DataFrames em um único DataFrame
+    df_final = pd.concat(lista_dfs, ignore_index=True)
+
+    # Caminho do arquivo final
+    caminho_saida_final = os.path.join(diretorio, "dados_combinados.csv")
+
+    # Salvar o DataFrame final em um único arquivo CSV
+    df_final.to_csv(caminho_saida_final, encoding="utf-8", index=False, sep=delimitador)
+    print(f"Arquivos combinados salvos em: {caminho_saida_final}")
+
 # Baixar arquivos dos últimos 2 anos
 ano_atual = datetime.now().year
 anos_para_baixar = [ano_atual - 1, ano_atual - 2]
@@ -102,26 +158,8 @@ for ano in anos_para_baixar:
     caminho_pasta_ano = os.path.join(diretorio_downloads, str(ano))
     copiar_arquivos(caminho_pasta_ano, diretorio_uploads)
 
-# Baixar dados cadastrais das operadoras ativas
-url_operadoras_base = 'https://dadosabertos.ans.gov.br/FTP/PDA/operadoras_de_plano_de_saude_ativas/'
-arquivos_operadoras = obter_lista_arquivos(url_operadoras_base, extensao='.csv')
-for arquivo in arquivos_operadoras:
-    caminho_pasta_operadoras = os.path.join(diretorio_downloads, 'operadoras_ativas')
-    os.makedirs(caminho_pasta_operadoras, exist_ok=True)
-    destino_operadoras_temp = os.path.join(caminho_pasta_operadoras, os.path.basename(arquivo))
-    destino_operadoras_final = os.path.join(caminho_pasta_operadoras, 'Relatorio_Operadoras_Ativas.csv')
-    baixar_arquivo(arquivo, destino_operadoras_temp)
-    
-    # Verificar se o arquivo de destino já existe e removê-lo se necessário
-    if os.path.exists(destino_operadoras_final):
-        os.remove(destino_operadoras_final)
-    
-    os.rename(destino_operadoras_temp, destino_operadoras_final)
-    print(f'Arquivo renomeado para: {destino_operadoras_final}')
-    
-    # Copiar o arquivo CSV para o diretório de uploads
-    shutil.copy2(destino_operadoras_final, diretorio_uploads)
-    print(f'Arquivo copiado para: {os.path.join(diretorio_uploads, "Relatorio_Operadoras_Ativas.csv")}')
+# Pré-processar arquivos CSV no diretório de uploads
+preprocessar_arquivos_csv(diretorio_uploads)
 
 # Excluir todos os arquivos ZIP após o processo
 excluir_arquivos_zip(diretorio_downloads)
