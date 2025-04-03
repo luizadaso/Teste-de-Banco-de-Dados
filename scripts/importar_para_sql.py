@@ -68,6 +68,12 @@ def importar_csv_para_mysql(caminho_csv, tabela, colunas, engine, chunksize=5000
             # Filtrar REG_ANS inválidos
             chunk = chunk[chunk['REG_ANS'].isin(valid_reg_ans)]
 
+            # Filtrar valores fora do intervalo permitido
+            chunk = chunk[(chunk['VL_SALDO_INICIAL'].abs() <= 1e30) & (chunk['VL_SALDO_FINAL'].abs() <= 1e30)]
+
+            # Verificar se há valores nulos ou inválidos
+            chunk = chunk.dropna(subset=['VL_SALDO_INICIAL', 'VL_SALDO_FINAL'])
+
             # Inserir no banco
             chunk.to_sql(tabela, engine, if_exists='append', index=False)
 
