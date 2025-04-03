@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, text, inspect
 from database_setup import db_config
 
 # Diretório de destino para cópia dos arquivos
-diretorio_uploads = 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads'
+diretorio_uploads = r'C:\ProgramData\MySQL\MySQL Server 8.0\Uploads'
 
 # Configurações do banco de dados
 usuario = db_config['user']
@@ -73,6 +73,9 @@ def importar_csv_para_mysql(caminho_csv, tabela, colunas, engine, chunksize=5000
 
             # Verificar se há valores nulos ou inválidos
             chunk = chunk.dropna(subset=['VL_SALDO_INICIAL', 'VL_SALDO_FINAL'])
+
+            # Verificar se há valores fora do intervalo permitido
+            chunk = chunk[(chunk['VL_SALDO_INICIAL'] <= 999999999999999999999999999999.99) & (chunk['VL_SALDO_FINAL'] <= 999999999999999999999999999999.99)]
 
             # Inserir no banco
             chunk.to_sql(tabela, engine, if_exists='append', index=False)
