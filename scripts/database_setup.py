@@ -4,7 +4,7 @@ from mysql.connector import Error
 # Configurações do banco de dados
 db_config = {
     'user': 'root',
-    'password': 'anAmotocros57!',
+    'password': 'senha',
     'host': 'localhost',
     'database': 'teste_de_banco_de_dados'
 }
