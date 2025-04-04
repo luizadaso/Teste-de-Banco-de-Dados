@@ -1,4 +1,4 @@
-# Análise de Gastos com Assistência Médica – Operadoras Ativas
+# Análise de Gastos com Assistência Médica
 
 Este projeto realiza o processamento e análise de dados financeiros das operadoras de saúde brasileiras com foco em eventos/sinistros médicos-hospitalares. Ele automatiza o download, descompactação e importação dos dados trimestrais dos últimos dois anos, utilizando Python e MySQL para organização e consulta.
 
@@ -111,6 +111,7 @@ scripts/
 - Pacotes Python:
   ```bash
   pip install pandas sqlalchemy mysql-connector-python
+  pip install requests beautifulsoup4 pandas
   ```
 
 ---
